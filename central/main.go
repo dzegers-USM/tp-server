@@ -2,18 +2,18 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"log"
+	"os"
 
 	pb "github.com/dzegers-USM/tp-server/agua/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	// Importa el paquete generado por protoc
 )
 
 func initWater(client pb.MiServicioClient, n int32) {
 	client.Inicializador(context.Background(), &pb.InicializadorRequest{Inicializador: n})
-	fmt.Printf("Init water with n=%d\n", n)
+	log.Printf("Init water with %d tiles\n", n)
 }
 
 func watchWater(client pb.MiServicioClient) {
@@ -26,14 +26,25 @@ func watchWater(client pb.MiServicioClient) {
 		if err != nil {
 			log.Fatalf("Error watching water sv: %v", err)
 		}
-		fmt.Printf("Got msg from water sv: %v\n", msg.Estado)
+		log.Printf("Got msg from water sv: %v\n", msg.Estado)
 	}
 }
 
 func main() {
-	var nWater int
-	fmt.Print("Water resource availability (int): ")
-	fmt.Scan(&nWater)
+	data, err := os.ReadFile("config.json")
+	if err != nil {
+		log.Fatalf("Failed to read config file: %v", err)
+	}
+
+	type SimulationConfig struct {
+		WaterTiles int
+	}
+	var config SimulationConfig
+	err = json.Unmarshal(data, &config)
+	if err != nil {
+		log.Fatalf("Failed to parse config file: %v", err)
+	}
+	log.Printf("Starting with config: %+v", config)
 
 	waterConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -43,7 +54,7 @@ func main() {
 	waterClient := pb.NewMiServicioClient(waterConn)
 
 	// Enviar parámetros iniciales
-	initWater(waterClient, int32(nWater))
+	initWater(waterClient, int32(config.WaterTiles))
 
 	// Monitorear heartbeat de los sv de recursos
 	watchWater(waterClient)
