@@ -10,12 +10,18 @@ service ServicioHabitantes {
   rpc ConsumirRecurso (EstadoRequest) returns (stream EstadoResponse) {}
 }
 
+message Habitante {
+  int32 posX = 1;
+  int32 posY = 2;
+  int32 estado = 3;
+}
+
 message InicializadorRequest {
   int32 num_habitantes = 1;
 }
 
 message InicializadorResponse {
-  repeated int32 estados_iniciales = 1;
+  repeated Habitante habitantes_inicial = 1;
 }
 
 message EstadoRequest {
@@ -23,13 +29,5 @@ message EstadoRequest {
 }
 
 message EstadoResponse {
-  repeated int32 respuesta = 1;
+  repeated Habitante estado_habitante = 1;
 }
-
-// message HeartbeatRequest {
-//   string mensaje = 1;
-// }
-
-// message HeartbeatResponse {
-//   string estado = 1;
-// }

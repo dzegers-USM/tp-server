@@ -17,35 +17,49 @@ import (
 	"google.golang.org/grpc"
 )
 
+type habitante struct {
+	posX   int32
+	posY   int32
+	estado int32
+}
+
 type server struct {
 	pb.UnimplementedServicioHabitantesServer
-	estados []int32
-	mu      sync.Mutex // Protege el acceso concurrente a las variables
+	habitantes []habitante
+	mu         sync.Mutex // Protege el acceso concurrente a las variables
 }
 
 /*
-**	Set niveles de sed iniciales para cada habitante y comunicarlos a cliente.
+**	Set parametros iniciales para cada habitante y comunicarlos a cliente.
 **	Cliente debe comunicar el numero de habitantes a setear en su request.
  */
 func (s *server) InicializadorHabitantes(in *pb.InicializadorRequest, stream pb.ServicioHabitantes_InicializadorHabitantesServer) error {
 
-	//Rango de sed inicial
-	const min int32 = 5
-	const max int32 = 100
+	//Parametros
+	const min_posX int32 = 0
+	const max_posX int32 = 600
+	const min_posY int32 = 0
+	const max_posY int32 = 600
+	const min_sed int32 = 0
+	const max_sed int32 = 100
 
 	//Protege el acceso concurrente a las variables mientras se inicializan.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	//Set niveles de sed iniciales para cada habitante y comunicarlos a cliente.
-	s.estados = make([]int32, in.GetNumHabitantes())
-	fmt.Printf("Iniciando con n=%d habitantes", in.GetNumHabitantes())
-	for i := range s.estados {
-		s.estados[i] = rand.Int31n(max-min+1) + min
+	//Set parametros iniciales para cada habitante y comunicarlos a cliente.
+	s.habitantes = make([]habitante, in.GetNumHabitantes())
+	for i := range s.habitantes {
+		s.habitantes[i] = habitante{
+			posX:   rand.Int31n(max_posX-min_posX+1) + min_posX,
+			posY:   rand.Int31n(max_posY-min_posY+1) + min_posY,
+			estado: rand.Int31n(max_sed-min_sed+1) + min_sed,
+		}
 	}
+	fmt.Printf("Iniciando con n=%d habitantes", in.GetNumHabitantes())
 
 	//Enviar stream de estado inicial a cliente
-	response := &pb.InicializadorResponse{EstadosIniciales: s.estados}
+	response := &pb.InicializadorResponse{HabitantesInicial: formatHabitantesResponse(s.habitantes)}
 	if err := stream.Send(response); err != nil {
 		return err
 	}
@@ -53,24 +67,43 @@ func (s *server) InicializadorHabitantes(in *pb.InicializadorRequest, stream pb.
 	return nil
 }
 
+// Convertir habitantes a []*pb.Habitante para poder enviarlo como respuesta.
+func formatHabitantesResponse(habitantes []habitante) []*pb.Habitante {
+	responseHabitantes := make([]*pb.Habitante, len(habitantes))
+	for i, h := range habitantes {
+		responseHabitantes[i] = &pb.Habitante{
+			PosX:   h.posX,
+			PosY:   h.posY,
+			Estado: h.estado,
+		}
+	}
+	return responseHabitantes
+}
+
 /*
-***	Cada 5 segundos actualiza el estado de los habitantes (resta 1 a cada uno) y se lo informa al cliente.
+***	Cada 5 segundos actualiza el nivel de sed de los habitantes (resta 1 a cada uno) y se lo informa al cliente.
  */
 func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabitantes_ActualizarEstadoServer) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
+
+	ticker_movimiento := time.NewTicker(1000 * time.Millisecond)
+	defer ticker_movimiento.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
 			s.mu.Lock()
 			s.updateEstados()
-			response := &pb.EstadoResponse{Respuesta: s.estados}
+			response := &pb.EstadoResponse{EstadoHabitante: formatHabitantesResponse(s.habitantes)}
 			s.mu.Unlock()
 
 			if err := stream.Send(response); err != nil {
 				return err
 			}
+		case <-ticker_movimiento.C:
+			s.mu.Lock()
+			s.randomWalk()
 
 		case <-stream.Context().Done():
 			return stream.Context().Err()
@@ -82,34 +115,54 @@ func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabita
 ***	Disminuye estado de habitantes en -1.
  */
 func (s *server) updateEstados() {
-	for i := range s.estados {
-		if s.estados[i] > 0 {
-			s.estados[i] -= 1
+	for i := range s.habitantes {
+		if s.habitantes[i].estado > 0 {
+			s.habitantes[i].estado -= 1
 		}
 	}
 }
 
 /*
-***	Cada 5 segundos actualiza el estado de los habitantes (resta 1 a cada uno) y se lo informa al cliente.
+***	Setea estado de habitante en 100.
  */
-func (s *server) ConsumirRecurso(in *pb.EstadoRequest, stream pb.ServicioHabitantes_ConsumirRecursoServer) error {
-	//Protege el acceso concurrente a las variables mientras se ejecuta la funcion.
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// func (s *server) ConsumirRecurso(in *pb.EstadoRequest, stream pb.ServicioHabitantes_ConsumirRecursoServer) error {
+// 	//Protege el acceso concurrente a las variables mientras se ejecuta la funcion.
+// 	s.mu.Lock()
+// 	defer s.mu.Unlock()
 
-	var aumento int32 = in.GetRequest()
+// 	var id_habitante int32 = in.GetRequest()
 
-	for i := range s.estados {
-		if s.estados[i] > 0 {
-			s.estados[i] += aumento
+// 	if s.habitantes[id_habitante].estado > 0 {
+// 		s.habitantes[id_habitante].estado += 100
+// 	}
+
+// 	response := &pb.EstadoResponse{Respuesta: s.habitantes}
+// 	if err := stream.Send(response); err != nil {
+// 		return err
+// 	}
+// 	return stream.Context().Err()
+// }
+
+func (s *server) randomWalk() {
+	for i := range s.habitantes {
+		//Coordenadas X
+		if s.habitantes[i].posX <= 0 {
+			s.habitantes[i].posX = int32(s.habitantes[i].posX) + rand.Int31n(2) //Suma 0 o 1
+		} else if s.habitantes[i].posX >= 600 {
+			s.habitantes[i].posX = int32(s.habitantes[i].posX) + rand.Int31n(2) - 1 //Suma 0 o -1
+		} else {
+			s.habitantes[i].posX = int32(s.habitantes[i].posX) + rand.Int31n(3) - 1 //Suma -1, 0 o -1
+		}
+
+		//Coordenadas Y
+		if s.habitantes[i].posY <= 0 {
+			s.habitantes[i].posY = int32(s.habitantes[i].posY) + rand.Int31n(2) //Suma 0 o 1
+		} else if s.habitantes[i].posX >= 600 {
+			s.habitantes[i].posY = int32(s.habitantes[i].posY) + rand.Int31n(2) - 1 //Suma 0 o -1
+		} else {
+			s.habitantes[i].posY = int32(s.habitantes[i].posY) + rand.Int31n(3) - 1 //Suma -1, 0 o -1
 		}
 	}
-
-	response := &pb.EstadoResponse{Respuesta: s.estados}
-	if err := stream.Send(response); err != nil {
-		return err
-	}
-	return stream.Context().Err()
 }
 
 // Levantar como servidor mientras pa hacer pruebas (se supone que esto deberia estar en central?)
