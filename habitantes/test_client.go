@@ -7,7 +7,7 @@ import (
 
 	// "time"
 
-	pb "habitantes/misc"
+	pb "github.com/dzegers-USM/tp-server/habitantes/misc"
 
 	"google.golang.org/grpc"
 )
