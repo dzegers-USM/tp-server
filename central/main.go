@@ -48,6 +48,40 @@ func initHabitantes(client pbh.ServicioHabitantesClient, q amqp.Queue, ch *amqp.
 	}
 }
 
+func watchHabitantes(client pbh.ServicioHabitantesClient, q amqp.Queue, ch *amqp.Channel) {
+	estadosActuales, err := client.ActualizarEstado(context.Background(), &pbh.EstadoRequest{Request: 50})
+	if err != nil {
+		log.Fatalf("Failed to publish a message: %v", err)
+	}
+
+	for {
+		resp, err := estadosActuales.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("error receiving response: %v", err)
+		}
+
+		data, _ := json.Marshal(resp.Respuesta)
+
+		log.Printf("Estados actuales de los habitantes:\n%v\n\n", resp.Respuesta)
+		err = ch.PublishWithContext(context.Background(),
+			"",
+			q.Name,
+			false,
+			false,
+			amqp.Publishing{
+				ContentType: "application/json",
+				Body:        data,
+			},
+		)
+		if err != nil {
+			log.Fatalf("Failed to publish a message: %v", err)
+		}
+	}
+}
+
 func initWater(client pb.MiServicioClient, n int32) {
 	client.Inicializador(context.Background(), &pb.InicializadorRequest{Inicializador: n})
 	log.Printf("Init water with %d tiles\n", n)
@@ -124,4 +158,5 @@ func main() {
 
 	initHabitantes(habitantesClient, q, amqpCh)
 
+	watchHabitantes(habitantesClient, q, amqpCh)
 }
