@@ -1,4 +1,4 @@
-package habitantes
+package main
 
 import (
 	"context"
@@ -12,10 +12,19 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Función para mostrar estados de manera estructurada
+func mostrarEstados(habitantes []*pb.Habitante) {
+	log.Printf("Estados de los habitantes:\n")
+	for i, h := range habitantes {
+		log.Printf("Habitante %d: posX = %d, posY = %d, estado = %d", i, h.PosX, h.PosY, h.Estado)
+	}
+	log.Println()
+}
+
 /*
 ***	Ejemplo con 50 habitantes
  */
-func runtest() {
+func main() {
 	conn, err := grpc.Dial("localhost:50052", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -28,7 +37,7 @@ func runtest() {
 	ctx := context.Background()
 
 	//Pedir a server inicializar estados de habitantes.
-	req := &pb.InicializadorRequest{NumHabitantes: 50}
+	req := &pb.InicializadorRequest{NumHabitantes: 10}
 	estadosIniciales, err := c.InicializadorHabitantes(ctx, req)
 	if err != nil {
 		log.Fatalf("could not initialize estados: %v", err)
@@ -42,10 +51,10 @@ func runtest() {
 		if err != nil {
 			log.Fatalf("error receiving response: %v", err)
 		}
-		log.Printf("Estados iniciales de los habitantes:\n%v\n\n", resp.EstadosIniciales)
+		mostrarEstados(resp.HabitantesInicial)
 	}
 
-	//Escuchar actualizacion de estados (pd: EstadoRequest no hace nada)
+	//Inicia y escucha actualizacion de estados (pd: &pb.EstadoRequest no hace nada)
 	estadosActuales, err := c.ActualizarEstado(ctx, &pb.EstadoRequest{Request: 50})
 	if err != nil {
 		log.Fatalf("could not start updates: %v", err)
@@ -59,6 +68,7 @@ func runtest() {
 		if err != nil {
 			log.Fatalf("error receiving response: %v", err)
 		}
-		log.Printf("Estados actuales de los habitantes:\n%v\n\n", resp.Respuesta)
+		// log.Printf("Estados actuales de los habitantes:\n%v\n\n", resp.GetEstadoHabitante())
+		mostrarEstados(resp.GetEstadoHabitante())
 	}
 }

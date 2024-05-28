@@ -14,6 +14,15 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Función para mostrar estados de manera estructurada
+func mostrarEstados(habitantes []*pbh.Habitante) {
+	log.Printf("Estados de los habitantes:\n")
+	for i, h := range habitantes {
+		log.Printf("Habitante %d: posX = %d, posY = %d, estado = %d", i, h.PosX, h.PosY, h.Estado)
+	}
+	log.Println()
+}
+
 func initHabitantes(client pbh.ServicioHabitantesClient, q amqp.Queue, ch *amqp.Channel) {
 	estadosIniciales, err := client.InicializadorHabitantes(context.Background(), &pbh.InicializadorRequest{NumHabitantes: 50})
 	if err != nil {
@@ -28,10 +37,9 @@ func initHabitantes(client pbh.ServicioHabitantesClient, q amqp.Queue, ch *amqp.
 		if err != nil {
 			log.Fatalf("error receiving response: %v", err)
 		}
+		mostrarEstados(resp.HabitantesInicial)
 
-		data, _ := json.Marshal(resp.EstadosIniciales)
-
-		log.Printf("Estados iniciales de los habitantes:\n%v\n\n", resp.EstadosIniciales)
+		data, _ := json.Marshal(resp.HabitantesInicial)
 		err = ch.PublishWithContext(context.Background(),
 			"",
 			q.Name,
@@ -62,10 +70,9 @@ func watchHabitantes(client pbh.ServicioHabitantesClient, q amqp.Queue, ch *amqp
 		if err != nil {
 			log.Fatalf("error receiving response: %v", err)
 		}
+		mostrarEstados(resp.GetEstadoHabitante())
 
-		data, _ := json.Marshal(resp.Respuesta)
-
-		log.Printf("Estados actuales de los habitantes:\n%v\n\n", resp.Respuesta)
+		data, _ := json.Marshal(resp.GetEstadoHabitante())
 		err = ch.PublishWithContext(context.Background(),
 			"",
 			q.Name,
