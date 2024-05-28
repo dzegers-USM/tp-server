@@ -1,6 +1,7 @@
 package main
 
 import (
+	// "context"
 	"fmt"
 	// "io"
 	"log"
@@ -80,18 +81,19 @@ func formatHabitantesResponse(habitantes []habitante) []*pb.Habitante {
 }
 
 /*
+***	Mueve a los habitantes de manera aleatorea cada 1 seg.
 ***	Cada 5 segundos actualiza el nivel de sed de los habitantes (resta 1 a cada uno) y se lo informa al cliente.
  */
 func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabitantes_ActualizarEstadoServer) error {
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
+	ticker_sed := time.NewTicker(5000 * time.Millisecond) //n(000) Segundos
+	defer ticker_sed.Stop()
 
-	ticker_movimiento := time.NewTicker(1000 * time.Millisecond)
+	ticker_movimiento := time.NewTicker(1000 * time.Millisecond) //n(000) Segundos
 	defer ticker_movimiento.Stop()
 
 	for {
 		select {
-		case <-ticker.C:
+		case <-ticker_sed.C:
 			s.mu.Lock()
 			s.updateEstados()
 			response := &pb.EstadoResponse{EstadoHabitante: formatHabitantesResponse(s.habitantes)}
@@ -103,6 +105,12 @@ func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabita
 		case <-ticker_movimiento.C:
 			s.mu.Lock()
 			s.randomWalk()
+			response := &pb.EstadoResponse{EstadoHabitante: formatHabitantesResponse(s.habitantes)}
+			s.mu.Unlock()
+
+			if err := stream.Send(response); err != nil {
+				return err
+			}
 
 		case <-stream.Context().Done():
 			return stream.Context().Err()

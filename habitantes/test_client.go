@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Función para mostrar estados iniciales de manera estructurada
-func mostrarEstadosIniciales(habitantes []*pb.Habitante) {
-	log.Printf("Estados iniciales de los habitantes:\n")
+// Función para mostrar estados de manera estructurada
+func mostrarEstados(habitantes []*pb.Habitante) {
+	log.Printf("Estados de los habitantes:\n")
 	for i, h := range habitantes {
 		log.Printf("Habitante %d: posX = %d, posY = %d, estado = %d", i, h.PosX, h.PosY, h.Estado)
 	}
@@ -51,7 +51,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("error receiving response: %v", err)
 		}
-		mostrarEstadosIniciales(resp.HabitantesInicial)
+		mostrarEstados(resp.HabitantesInicial)
 	}
 
 	//Inicia y escucha actualizacion de estados (pd: &pb.EstadoRequest no hace nada)
@@ -68,6 +68,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("error receiving response: %v", err)
 		}
-		log.Printf("Estados actuales de los habitantes:\n%v\n\n", resp.GetEstadoHabitante())
+		// log.Printf("Estados actuales de los habitantes:\n%v\n\n", resp.GetEstadoHabitante())
+		mostrarEstados(resp.GetEstadoHabitante())
 	}
 }
