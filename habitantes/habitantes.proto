@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "misc/";
+
+package habitantes;
+
+service ServicioHabitantes {
+  rpc InicializadorHabitantes (InicializadorRequest) returns (stream InicializadorResponse) {}
+  rpc ActualizarEstado (EstadoRequest) returns (stream EstadoResponse) {}
+  rpc ConsumirRecurso (EstadoRequest) returns (stream EstadoResponse) {}
+}
+
+message InicializadorRequest {
+  int32 num_habitantes = 1;
+}
+
+message InicializadorResponse {
+  repeated int32 estados_iniciales = 1;
+}
+
+message EstadoRequest {
+  int32 request = 1;
+}
+
+message EstadoResponse {
+  repeated int32 respuesta = 1;
+}
+
+// message HeartbeatRequest {
+//   string mensaje = 1;
+// }
+
+// message HeartbeatResponse {
+//   string estado = 1;
+// }
