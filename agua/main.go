@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/iogurth/agua-server/server" // Importa el paquete generado por protoc
+	pb "github.com/dzegers-USM/tp-server/agua/server" // Importa el paquete generado por protoc
 	"google.golang.org/grpc"
 )
 

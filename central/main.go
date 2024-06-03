@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	pb "github.com/dzegers-USM/tp-server/agua/server"
 	pbh "github.com/dzegers-USM/tp-server/habitantes/misc"
@@ -108,7 +110,67 @@ func watchWater(client pb.MiServicioClient) {
 	}
 }
 
+func getCoordenadasWater(client pb.MiServicioClient) {
+	resp, err := client.EnviarCoordenadas(context.Background(), &pb.CoordenadasRequest{})
+	if err != nil {
+		log.Fatalf("Failed to invoke EnviarCoordenadas from water sv: %v", err)
+	}
+	log.Printf("Respuesta recibida:\n%s", resp.Respuesta)
+
+	// Nombre del archivo CSV de salida
+	filename := "coordenadas.csv"
+
+	// Escribir datos en el archivo CSV
+	errcsv := writeCSV(resp.Respuesta, filename)
+	if errcsv != nil {
+		log.Fatalf("Error al escribir en el archivo CSV: %v", err)
+	}
+
+	log.Printf("Datos escritos en el archivo %s exitosamente.", filename)
+}
+
+func writeCSV(data string, filename string) error {
+	// Abre el archivo CSV para escritura
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Crea un escritor CSV
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Divide el mensaje en líneas
+	lines := strings.Split(data, "\n")
+
+	// Escribe cada línea en el archivo CSV
+	for _, line := range lines {
+		// Divide cada línea en campos usando ";"
+		fields := strings.Split(line, ";")
+
+		// Escribe los campos en el archivo CSV
+		err := writer.Write(fields)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func main() {
+
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Failed to connect: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewMiServicioClient(conn)
+
+	getCoordenadasWater(client)
+
 	data, err := os.ReadFile("config.json")
 	if err != nil {
 		log.Fatalf("Failed to read config file: %v", err)
@@ -166,4 +228,5 @@ func main() {
 	initHabitantes(habitantesClient, q, amqpCh)
 
 	watchHabitantes(habitantesClient, q, amqpCh)
+
 }
