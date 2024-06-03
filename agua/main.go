@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/dzegers-USM/tp-server/agua/server" // Importa el paquete generado por protoc
+	pb "github.com/iogurth/agua-server/server" // Importa el paquete generado por protoc
 	"google.golang.org/grpc"
 )
 
@@ -24,18 +24,16 @@ type server struct {
 func CoordenGen(n int) string {
 	coordenadas := ""
 	for i := 0; i < n; i++ {
-		x := rand.Float64()
-		y := rand.Float64()
-		coordenadas += fmt.Sprintf("%f;%f\n", x, y)
+		x := rand.Intn(6)
+		y := rand.Intn(6)
+		cantidad := rand.Intn(20) + 1
+		coordenadas += fmt.Sprintf("%d;%d;%d\n", x, y, cantidad)
 	}
 	return coordenadas
 }
 
 func (s *server) Inicializador(ctx context.Context, in *pb.InicializadorRequest) (*pb.InicializadorResponse, error) {
-	n := int(in.GetInicializador())
-	fmt.Printf("Iniciando con n=%d", n)
-
-	coordenadas := CoordenGen(n)
+	coordenadas := CoordenGen(int(in.GetInicializador()))
 	// Escribe las coordenadas en un archivo .txt
 	f, err := os.Create("coordenadas.txt")
 	if err != nil {

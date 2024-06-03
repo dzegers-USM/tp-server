@@ -88,7 +88,7 @@ func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabita
 	ticker_sed := time.NewTicker(5000 * time.Millisecond) //n(000) Segundos
 	defer ticker_sed.Stop()
 
-	ticker_movimiento := time.NewTicker(1000 * time.Millisecond) //n(000) Segundos
+	ticker_movimiento := time.NewTicker(500 * time.Millisecond) //n(000) Segundos
 	defer ticker_movimiento.Stop()
 
 	for {
