@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	pb "github.com/dzegers-USM/tp-server/agua/server"
@@ -117,8 +118,11 @@ func getCoordenadasWater(client pb.MiServicioClient) {
 	}
 	log.Printf("Respuesta recibida:\n%s", resp.Respuesta)
 
-	// Nombre del archivo CSV de salida
-	filename := "coordenadas.csv"
+	// Ruta del directorio donde se guardará el archivo CSV
+	directory := "C:/Users/ivano/Escritorio/Civitas/" // Cambia esta ruta por la que necesites
+
+	// Nombre del archivo CSV de salida en el directorio específico
+	filename := filepath.Join(directory, "coordenadas.csv")
 
 	// Escribir datos en el archivo CSV
 	errcsv := writeCSV(resp.Respuesta, filename)
