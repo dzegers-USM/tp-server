@@ -14,6 +14,7 @@ message Habitante {
   int32 posX = 1;
   int32 posY = 2;
   int32 estado = 3;
+  int32 id = 4;
 }
 
 message InicializadorRequest {
