@@ -329,7 +329,7 @@ func closestWater(origen habitante, coordenadas []coordenadaAgua) (coordenadaAgu
 func (s *server) walkToWater(coordenadas []coordenadaAgua) {
 
 	var umbralSed int32 = 30
-	var paso int32 = 1 //Si se quiere poder cambiar la velocidad hay que modificar la funcion
+	var paso int32 = 20 //Si se quiere poder cambiar la velocidad hay que modificar la funcion
 
 	for i := range s.habitantes {
 
@@ -346,16 +346,32 @@ func (s *server) walkToWater(coordenadas []coordenadaAgua) {
 
 			//Movimiento X
 			if s.habitantes[i].posX < destino.X {
-				s.habitantes[i].posX = int32(s.habitantes[i].posX) + paso
+				if s.habitantes[i].posX+paso > destino.X {
+					s.habitantes[i].posX = destino.X
+				} else {
+					s.habitantes[i].posX = int32(s.habitantes[i].posX) + paso
+				}
 			} else if s.habitantes[i].posX > destino.X {
-				s.habitantes[i].posX = int32(s.habitantes[i].posX) - paso
+				if s.habitantes[i].posX-paso < destino.X {
+					s.habitantes[i].posX = destino.X
+				} else {
+					s.habitantes[i].posX = int32(s.habitantes[i].posX) - paso
+				}
 			}
 
 			//Movimiento Y
 			if s.habitantes[i].posY < destino.Y {
-				s.habitantes[i].posY = int32(s.habitantes[i].posY) + paso
+				if s.habitantes[i].posY+paso > destino.Y {
+					s.habitantes[i].posY = destino.Y
+				} else {
+					s.habitantes[i].posY = int32(s.habitantes[i].posY) + paso
+				}
 			} else if s.habitantes[i].posY > destino.Y {
-				s.habitantes[i].posY = int32(s.habitantes[i].posY) - paso
+				if s.habitantes[i].posY-paso < destino.Y {
+					s.habitantes[i].posY = destino.Y
+				} else {
+					s.habitantes[i].posY = int32(s.habitantes[i].posY) - paso
+				}
 			}
 
 			//LLega a coordenada y toma agua
