@@ -313,6 +313,11 @@ func (s *server) walkToWater(coordenadas []coordenadaAgua) {
 			} else if s.habitantes[i].posY > destino.Y {
 				s.habitantes[i].posY = int32(s.habitantes[i].posY) - paso
 			}
+
+			//LLega a coordenada y toma agua
+			if s.habitantes[i].posX == destino.X && s.habitantes[i].posY == destino.Y {
+				s.habitantes[i].estado = 100
+			}
 		}
 	}
 
