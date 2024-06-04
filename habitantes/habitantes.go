@@ -117,7 +117,7 @@ func formatHabitantesResponse(habitantes []habitante) []*pb.Habitante {
 func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabitantes_ActualizarEstadoServer) error {
 
 	//Coordenadas awa
-	coordenadas, err := readCoordenates("../agua/coordenadas.txt")
+	coordenadas, err := readCoordenates("../../Civitas/coordenadas.csv")
 	if err != nil {
 		log.Fatalf("failed to read file: %v", err)
 	}
@@ -257,6 +257,7 @@ func readCoordenates(fileName string) ([]coordenadaAgua, error) {
 	defer f.Close()
 
 	r := csv.NewReader(f)
+	r.Comma = ';'
 	lineas, err := r.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("no se pudo leer el archivo csv: %v", err)
@@ -265,9 +266,6 @@ func readCoordenates(fileName string) ([]coordenadaAgua, error) {
 	var coordenadas []coordenadaAgua
 
 	for _, line := range lineas {
-		if len(line) < 2 {
-			return nil, fmt.Errorf("línea inválida en el archivo: %v", line)
-		}
 
 		x, err := strconv.Atoi(line[0])
 		if err != nil {
@@ -280,8 +278,8 @@ func readCoordenates(fileName string) ([]coordenadaAgua, error) {
 		}
 
 		coordenadas = append(coordenadas, coordenadaAgua{
-			X: int32(x),
-			Y: int32(y),
+			X: 100*int32(x) + 50,
+			Y: 100*int32(y) + 50,
 		})
 	}
 

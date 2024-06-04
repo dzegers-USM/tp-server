@@ -27,7 +27,7 @@ func mostrarEstados(habitantes []*pbh.Habitante) {
 }
 
 func initHabitantes(client pbh.ServicioHabitantesClient, q amqp.Queue, ch *amqp.Channel) {
-	estadosIniciales, err := client.InicializadorHabitantes(context.Background(), &pbh.InicializadorRequest{NumHabitantes: 50})
+	estadosIniciales, err := client.InicializadorHabitantes(context.Background(), &pbh.InicializadorRequest{NumHabitantes: 20})
 	if err != nil {
 		log.Fatalf("Could not initialize estados: %v", err)
 	}
