@@ -2,10 +2,12 @@ package main
 
 import (
 	// "context"
-	"bufio"
+
+	"encoding/csv"
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 
 	// "io"
 	"log"
@@ -254,19 +256,47 @@ func readCoordenates(fileName string) ([]coordenadaAgua, error) {
 	}
 	defer f.Close()
 
+	r := csv.NewReader(f)
+	lineas, err := r.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("no se pudo leer el archivo csv: %v", err)
+	}
+
 	var coordenadas []coordenadaAgua
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		var x, y, e int32
-		_, err := fmt.Sscanf(scanner.Text(), "%d;%d;%d", &x, &y, &e)
-		if err != nil {
-			return nil, err
+
+	for _, line := range lineas {
+		if len(line) < 2 {
+			return nil, fmt.Errorf("línea inválida en el archivo: %v", line)
 		}
-		coordenadas = append(coordenadas, coordenadaAgua{X: x*100 + 50, Y: y*100 + 50})
+
+		x, err := strconv.Atoi(line[0])
+		if err != nil {
+			return nil, fmt.Errorf("no se pudo convertir X a entero: %v", err)
+		}
+
+		y, err := strconv.Atoi(line[1])
+		if err != nil {
+			return nil, fmt.Errorf("no se pudo convertir Y a entero: %v", err)
+		}
+
+		coordenadas = append(coordenadas, coordenadaAgua{
+			X: int32(x),
+			Y: int32(y),
+		})
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
+
+	// scanner := bufio.NewScanner(f)
+	// for scanner.Scan() {
+	// 	var x, y, e int32
+	// 	_, err := fmt.Sscanf(scanner.Text(), "%d;%d;%d", &x, &y, &e)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	coordenadas = append(coordenadas, coordenadaAgua{X: x*100 + 50, Y: y*100 + 50})
+	// }
+	// if err := scanner.Err(); err != nil {
+	// 	return nil, err
+	// }
 	return coordenadas, nil
 }
 
