@@ -20,7 +20,7 @@ import (
 func mostrarEstados(habitantes []*pbh.Habitante) {
 	log.Printf("Estados de los habitantes:\n")
 	for i, h := range habitantes {
-		log.Printf("Habitante %d: posX = %d, posY = %d, estado = %d", i, h.PosX, h.PosY, h.Estado)
+		log.Printf("Habitante %d: posX = %d, posY = %d, estado = %d, id = %d", i, h.PosX, h.PosY, h.Estado, h.Id)
 	}
 	log.Println()
 }

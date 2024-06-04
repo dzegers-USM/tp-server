@@ -30,6 +30,7 @@ type habitante struct {
 	posX   int32
 	posY   int32
 	estado int32
+	id     int32
 }
 
 type server struct {
@@ -60,6 +61,7 @@ func (s *server) InicializadorHabitantes(in *pb.InicializadorRequest, stream pb.
 	s.habitantes = make([]habitante, in.GetNumHabitantes())
 	for i := range s.habitantes {
 		s.habitantes[i] = habitante{
+			id:     int32(i),
 			posX:   rand.Int31n(max_posX-min_posX+1) + min_posX,
 			posY:   rand.Int31n(max_posY-min_posY+1) + min_posY,
 			estado: rand.Int31n(max_sed-min_sed+1) + min_sed,
@@ -84,6 +86,7 @@ func formatHabitantesResponse(habitantes []habitante) []*pb.Habitante {
 			PosX:   h.posX,
 			PosY:   h.posY,
 			Estado: h.estado,
+			Id:     h.id,
 		}
 	}
 	return responseHabitantes
