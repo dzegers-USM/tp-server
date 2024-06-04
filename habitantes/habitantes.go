@@ -39,6 +39,22 @@ type server struct {
 	mu         sync.Mutex // Protege el acceso concurrente a las variables
 }
 
+type autoInc struct {
+	sync.Mutex
+	id int32
+}
+
+func (a *autoInc) ID() (id int32) {
+	a.Lock()
+	defer a.Unlock()
+
+	id = a.id
+	a.id++
+	return
+}
+
+var autoIncrement autoInc // global instance
+
 /*
 ***	Set parametros iniciales para cada habitante y comunicarlos a cliente.
 ***	Cliente debe comunicar el numero de habitantes a setear en su request.
@@ -61,7 +77,7 @@ func (s *server) InicializadorHabitantes(in *pb.InicializadorRequest, stream pb.
 	s.habitantes = make([]habitante, in.GetNumHabitantes())
 	for i := range s.habitantes {
 		s.habitantes[i] = habitante{
-			id:     int32(i),
+			id:     autoIncrement.ID(),
 			posX:   rand.Int31n(max_posX-min_posX+1) + min_posX,
 			posY:   rand.Int31n(max_posY-min_posY+1) + min_posY,
 			estado: rand.Int31n(max_sed-min_sed+1) + min_sed,
@@ -115,6 +131,9 @@ func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabita
 	ticker_movimiento := time.NewTicker(500 * time.Millisecond) //n(000) Segundos
 	defer ticker_movimiento.Stop()
 
+	ticker_reproduccion := time.NewTicker(10000 * time.Millisecond)
+	defer ticker_reproduccion.Stop()
+
 	for {
 		select {
 		case <-ticker_sed.C:
@@ -136,7 +155,15 @@ func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabita
 			if err := stream.Send(response); err != nil {
 				return err
 			}
+		case <-ticker_reproduccion.C:
+			s.mu.Lock()
+			s.reproduccion()
+			response := &pb.EstadoResponse{EstadoHabitante: formatHabitantesResponse(s.habitantes)}
+			s.mu.Unlock()
 
+			if err := stream.Send(response); err != nil {
+				return err
+			}
 		case <-stream.Context().Done():
 			return stream.Context().Err()
 		}
@@ -150,6 +177,20 @@ func (s *server) updateEstados() {
 	for i := range s.habitantes {
 		if s.habitantes[i].estado > 0 {
 			s.habitantes[i].estado -= 1
+		}
+	}
+}
+
+func (s *server) reproduccion() {
+	for i := range s.habitantes {
+		if s.habitantes[i].estado > 110 {
+			s.habitantes[i].estado -= 10
+			s.habitantes = append(s.habitantes, habitante{
+				id:     autoIncrement.ID(),
+				posX:   s.habitantes[i].posX,
+				posY:   s.habitantes[i].posY,
+				estado: 100,
+			})
 		}
 	}
 }
@@ -319,7 +360,7 @@ func (s *server) walkToWater(coordenadas []coordenadaAgua) {
 
 			//LLega a coordenada y toma agua
 			if s.habitantes[i].posX == destino.X && s.habitantes[i].posY == destino.Y {
-				s.habitantes[i].estado = 100
+				s.habitantes[i].estado += 100
 			}
 		}
 	}
