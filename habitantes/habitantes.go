@@ -47,9 +47,9 @@ type autoInc struct {
 func (a *autoInc) ID() (id int32) {
 	a.Lock()
 	defer a.Unlock()
-
-	id = a.id
 	a.id++
+	id = a.id
+
 	return
 }
 
@@ -115,7 +115,7 @@ func formatHabitantesResponse(habitantes []habitante) []*pb.Habitante {
 func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabitantes_ActualizarEstadoServer) error {
 
 	//Coordenadas awa
-	coordenadas, err := readCoordenates("..\\agua\\coordenadas.txt")
+	coordenadas, err := readCoordenates("../agua/coordenadas.txt")
 	if err != nil {
 		log.Fatalf("failed to read file: %v", err)
 	}
@@ -125,7 +125,7 @@ func (s *server) ActualizarEstado(in *pb.EstadoRequest, stream pb.ServicioHabita
 	}
 
 	//Timers
-	ticker_sed := time.NewTicker(5000 * time.Millisecond) //n(000) Segundos
+	ticker_sed := time.NewTicker(1000 * time.Millisecond) //n(000) Segundos
 	defer ticker_sed.Stop()
 
 	ticker_movimiento := time.NewTicker(500 * time.Millisecond) //n(000) Segundos

@@ -119,7 +119,7 @@ func getCoordenadasWater(client pb.MiServicioClient) {
 	log.Printf("Respuesta recibida:\n%s", resp.Respuesta)
 
 	// Ruta del directorio donde se guardará el archivo CSV
-	directory := "C:/Users/ivano/Escritorio/Civitas/" // Cambia esta ruta por la que necesites
+	directory := `../../Civitas` // Cambia esta ruta por la que necesites
 
 	// Nombre del archivo CSV de salida en el directorio específico
 	filename := filepath.Join(directory, "coordenadas.csv")
@@ -127,7 +127,7 @@ func getCoordenadasWater(client pb.MiServicioClient) {
 	// Escribir datos en el archivo CSV
 	errcsv := writeCSV(resp.Respuesta, filename)
 	if errcsv != nil {
-		log.Fatalf("Error al escribir en el archivo CSV: %v", err)
+		log.Fatalf("Error al escribir en el archivo CSV: %v", errcsv)
 	}
 
 	log.Printf("Datos escritos en el archivo %s exitosamente.", filename)
@@ -143,21 +143,35 @@ func writeCSV(data string, filename string) error {
 
 	// Crea un escritor CSV
 	writer := csv.NewWriter(file)
-	defer writer.Flush()
+	writer.Comma = ';'
+
+	//print(data, "\n")
 
 	// Divide el mensaje en líneas
 	lines := strings.Split(data, "\n")
+
+	//print(lines, "\n")
 
 	// Escribe cada línea en el archivo CSV
 	for _, line := range lines {
 		// Divide cada línea en campos usando ";"
 		fields := strings.Split(line, ";")
+		print("xd1", fields, "\n")
 
+		if len(fields) == 1 {
+			continue
+		}
 		// Escribe los campos en el archivo CSV
 		err := writer.Write(fields)
 		if err != nil {
 			return err
 		}
+	}
+
+	writer.Flush()
+
+	if err := writer.Error(); err != nil {
+		panic(err)
 	}
 
 	return nil
