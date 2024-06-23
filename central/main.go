@@ -194,7 +194,7 @@ func main() {
 		log.Fatalf("Failed to read config file: %v", err)
 	}
 
-	amqpConn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	amqpConn, err := amqp.Dial("amqps://aoqlvbcv:cIAh4WRAfs13b8N_Ooq7YMuC5IoUzHLd@prawn.rmq.cloudamqp.com/aoqlvbcv")
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
 	}
