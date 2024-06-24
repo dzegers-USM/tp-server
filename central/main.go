@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
 	"encoding/json"
 	"io"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 
 	pb "github.com/dzegers-USM/tp-server/agua/server"
 	pbh "github.com/dzegers-USM/tp-server/habitantes/misc"
@@ -111,7 +108,7 @@ func watchWater(client pb.MiServicioClient) {
 	}
 }
 
-func getCoordenadasWater(client pb.MiServicioClient) {
+/* func getCoordenadasWater(client pb.MiServicioClient) {
 	resp, err := client.EnviarCoordenadas(context.Background(), &pb.CoordenadasRequest{})
 	if err != nil {
 		log.Fatalf("Failed to invoke EnviarCoordenadas from water sv: %v", err)
@@ -175,11 +172,14 @@ func writeCSV(data string, filename string) error {
 	}
 
 	return nil
-}
+} */
 
 func main() {
+	ip_habitantes := "172.31.6.119"
+	ip_agua := "172.31.1.228"
+	ip_rabbit := "amqps://aoqlvbcv:cIAh4WRAfs13b8N_Ooq7YMuC5IoUzHLd@prawn.rmq.cloudamqp.com/aoqlvbcv"
 
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	/* conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
@@ -187,14 +187,14 @@ func main() {
 
 	client := pb.NewMiServicioClient(conn)
 
-	getCoordenadasWater(client)
+	getCoordenadasWater(client) */
 
 	data, err := os.ReadFile("config.json")
 	if err != nil {
 		log.Fatalf("Failed to read config file: %v", err)
 	}
 
-	amqpConn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	amqpConn, err := amqp.Dial(ip_rabbit)
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
 	}
@@ -223,7 +223,7 @@ func main() {
 	}
 	log.Printf("Starting with config: %+v", config)
 
-	waterConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	waterConn, err := grpc.NewClient(ip_agua+":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to water resource sv: %v", err)
 	}
@@ -236,7 +236,7 @@ func main() {
 	// Monitorear heartbeat de los sv de recursos
 	go watchWater(waterClient)
 
-	habitantesConn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	habitantesConn, err := grpc.Dial(ip_habitantes+":50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
