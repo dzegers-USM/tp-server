@@ -177,7 +177,6 @@ func writeCSV(data string, filename string) error {
 func main() {
 	ip_habitantes := "172.31.6.119"
 	ip_agua := "172.31.1.228"
-	ip_rabbit := "amqps://aoqlvbcv:cIAh4WRAfs13b8N_Ooq7YMuC5IoUzHLd@prawn.rmq.cloudamqp.com/aoqlvbcv"
 
 	/* conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
@@ -194,7 +193,7 @@ func main() {
 		log.Fatalf("Failed to read config file: %v", err)
 	}
 
-	amqpConn, err := amqp.Dial(ip_rabbit)
+	amqpConn, err := amqp.Dial("amqps://aoqlvbcv:cIAh4WRAfs13b8N_Ooq7YMuC5IoUzHLd@prawn.rmq.cloudamqp.com/aoqlvbcv")
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
 	}
